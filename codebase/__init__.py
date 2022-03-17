@@ -16,9 +16,14 @@ if __name__ == '__main__':
           f"{idx}", "\033[33;1m : \033[32;1m",
           f"{choices[idx]}"
           "\033[0m", sep="")
-    path = path + "/" if not path.endswith("/") else "" + choices[idx]
+    path = path + ("/" if not path.endswith("/") else "") + choices[idx]
     del choices
     del idx
+    print("\033[33;1m",
+          "OPENING",
+          "\033[36;1m",
+          f"{path}",
+          "\033[0m")
     jam = jams.load(path)
     instructed_chords = jam.search(namespace='chord')[0]
     performed_chords = jam.search(namespace='chord')[1]
@@ -32,3 +37,6 @@ if __name__ == '__main__':
     itp.add_annotations(ax1, performed_chords, ygrow_ratio=0.04, label_xoffset=0.06, label_yoffset=2)
     itp.add_annotations(ax2, instructed_chords, ygrow_ratio=0.2, label_xoffset=0.06, label_yoffset=-0.4)
     plt.show()
+    print("\033[33;1m",
+          "DONE",
+          "\033[0m")
