@@ -2,26 +2,11 @@
 interpreter
 @Author : marl : https://github.com/marl
 """
+import librosa
 import numpy as np
+import pandas as pd
 import pretty_midi
 from matplotlib import lines as mlines, pyplot as plt
-import tempfile
-import librosa
-import sox
-import os
-import pandas as pd
-
-
-def save_small_wav(out_path, y, fs):
-    fhandle, tmp_file = tempfile.mkstemp(suffix='.wav')
-
-    librosa.output.write_wav(tmp_file, y, fs)
-
-    tfm = sox.Transformer()
-    tfm.convert(bitdepth=16)
-    tfm.build(tmp_file, out_path)
-    os.close(fhandle)
-    os.remove(tmp_file)
 
 
 def jams_to_midi(jam, q=1):

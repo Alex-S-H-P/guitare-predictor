@@ -16,7 +16,7 @@ if __name__ == '__main__':
           f"{idx}", "\033[33;1m : \033[32;1m",
           f"{choices[idx]}"
           "\033[0m", sep="")
-    path = path + choices[idx]
+    path = path + "/" if not path.endswith("/") else "" + choices[idx]
     del choices
     del idx
     jam = jams.load(path)
