@@ -12,7 +12,7 @@ if __name__ == '__main__':
     choices = os.listdir(path)
     idx = random.randrange(len(choices))
     print("\033[33;1m",
-          "CHOOSE file n°", "\033[36;1m",
+          "CHOSE file n°", "\033[36;1m",
           f"{idx}", "\033[33;1m : \033[32;1m",
           f"{choices[idx]}"
           "\033[0m", sep="")
