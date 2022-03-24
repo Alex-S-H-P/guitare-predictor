@@ -26,10 +26,10 @@ def getData(path: str) -> np.ndarray:
             data = chord["data"]
             for sample in data:
                 embedder.add_value(sample["value"])
-    print("\rEmbedder \033[32;1mready\033[0m" + " "*64)
+    print("\rEmbedder \033[32;1mready\033[0m", " "*64)
     print("\033[36;1mCreating data vector\033[0m")
     mega_vector = np.zeros((1, len(embedder.map)), dtype="float64")
-    for choice in choices:
+    for i, choice in enumerate(choices):
         print(f"\r\033[33;1mReading\033[0m (\033[36m{i}\033[0m / \033[36m{len(choices)}\033[0m).", end="")
         jam = jams.load(path + ("/" if not path.endswith("/") else "") + choice)
         for instructed_cords in jam.search(namespace="chord"):
@@ -38,7 +38,9 @@ def getData(path: str) -> np.ndarray:
             for sample in data:
                 vector = embedder.vectorialize(sample["value"])
                 mega_vector = np.concatenate((mega_vector, vector.reshape(1, -1)), 0)
-    print("\rData \033[32;1mread\033[0m" + " " * 64)
+    print("\rData \033[32;1mread\033[0m", " " * 64)
+    mega_vector = mega_vector[1:, :]
+    print(f"Found \033[36;1m {mega_vector.shape[0]} notes played, including {mega_vector.shape[1]} different")
     return mega_vector
 
 
