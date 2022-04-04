@@ -3,7 +3,7 @@ import os
 import path_handler
 import matplotlib.pyplot as plt
 import random
-import interpreter as itp
+import codebase.interpreter as itp
 
 
 if __name__ == '__main__':
