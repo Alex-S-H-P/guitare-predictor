@@ -20,3 +20,6 @@ class Embedder:
         val = np.zeros(len(self.map), dtype="float64")
         val[self.map[token][0]] = 1
         return val
+
+    def __len__(self) -> int:
+        return len(self.map)
