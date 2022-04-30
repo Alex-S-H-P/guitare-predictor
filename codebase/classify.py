@@ -4,43 +4,83 @@ import typing
 
 import jams
 import matplotlib.pyplot as plt
-import numpy
 import numpy as np
 import sklearn.cluster as cluster
 
-import codebase.utillib.embedder as embed
+from codebase.utillib import embedder as embed, minMaxContext as normalizer
+from codebase.utillib.annotations import on_fail_ask_user_politely
 
 from codebase import path_handler
 
 
-def getData(path: str) -> np.ndarray:
-    """Returns the data as a numpy array that is contained within the guitar database"""
+@on_fail_ask_user_politely
+def getData(path: str, norm=normalizer.Normalizer()) -> np.ndarray:
+    """
+    Returns the data as a numpy array that is contained within the guitar database
+
+    We use normalizer.Normalizer() as a default value for the norm key word because
+    we want it to be shared across executions by default.
+    """
     choices = os.listdir(path)
     embedder = embed.Embedder()
+    note_count = 0
     print("\033[36;1mStarting to parse database\033[0m to evaluate embedding size")
+
+    # first pass for embedding and normalizing pre-computing.
     for i, choice in enumerate(choices):
-        print(f"\rEmbedder \033[33;1mcomputing\033[0m (\033[36m{i}\033[0m / \033[36m{len(choices)}\033[0m).", end="")
+
+        # print which file is being read.
+        print(f"\rEmbedder \033[33;1mcomputing\033[0m (file \033[36m{i}\033[0m / "
+              f"\033[36m{len(choices)}\033[0m, found \033[34;1m{len(embedder)}\033[0m classes, "
+              f"read \033[34;1m{note_count}\033[0m).",
+              end="")
+
         jam = jams.load(path + ("/" if not path.endswith("/") else "") + choice)
         for instructed_cords in jam.search(namespace="chord"):
             chord = json.loads(instructed_cords.__str__())
             data = chord["data"]
             for sample in data:
+                note_count += 1
                 embedder.add_value(sample["value"])
-    print("\rEmbedder \033[32;1mready\033[0m", " "*64)
-    print("\033[36;1mCreating data vector\033[0m")
-    mega_vector = np.zeros((1, len(embedder.map)), dtype="float64")
+                norm.fit_add(sample["duration"])
+
+    print("\rEmbedder \033[32;1mready\033[0m", " " * 64)
+    print(f"\033[36;1mCreating data vector for the \033[34;1m{note_count}\033[36;1m notes found \033[0m")
+
+    # we make the vector
+    mega_vector = np.zeros((note_count, len(embedder.map) + 1), dtype="float64")
+    k = 0
+
+    # second pass to actually populate this database vector.
     for i, choice in enumerate(choices):
+        # print which file is being read.
         print(f"\r\033[33;1mReading\033[0m (\033[36m{i}\033[0m / \033[36m{len(choices)}\033[0m).", end="")
         jam = jams.load(path + ("/" if not path.endswith("/") else "") + choice)
         for instructed_cords in jam.search(namespace="chord"):
             chord = json.loads(instructed_cords.__str__())
             data = chord["data"]
             for sample in data:
-                vector = embedder.vectorialize(sample["value"])
-                mega_vector = np.concatenate((mega_vector, vector.reshape(1, -1)), 0)
+                normalized_meta_data = np.array(
+                    [
+                        norm(sample["duration"])
+                    ]
+                )
+
+                mega_vector[k] = np.concatenate((
+                    embedder.vectorialize(sample["value"]),
+                    normalized_meta_data)
+                )
+                k += 1
+    # Data is read. tell the user.
     print("\rData \033[32;1mread\033[0m", " " * 64)
-    mega_vector = mega_vector[1:, :]
-    print(f"Found \033[36;1m {mega_vector.shape[0]} notes played, including {mega_vector.shape[1]} different")
+    print(
+        f"Found \033[36;1m {mega_vector.shape[0]}\033[0m notes played, including \033[36;1m{mega_vector.shape[1] - 1}\033[0m different")
+    # returns.
+    norm = np.linalg.norm(mega_vector)
+    print("Norm of database vector :",
+          "\033[32;1m" if norm > 1 else "\033[31;1m",
+          norm,
+          "\033[0m")
     return mega_vector
 
 
@@ -48,12 +88,17 @@ def determine_the_amount_of_classes(k_range: typing.Iterable, data: np.ndarray) 
     """Displays the inertia curve along k values in k_range to choose k optimally"""
     K: list[int] = [k for k in k_range]
     I: list[float] = []
+    print("\033[36;1mTesting appropriate number of classes.\033[0m")
     for k in k_range:
-        model = cluster.KMeans()
+        print(f"\r\033[33;1mTesting \033[34;1mk = {k}\033[0m", end="")
+        model = cluster.KMeans(n_clusters=k, n_init=20)
         model.fit(data)
         I.append(model.inertia_)
+    print(f"\r\033[33;1mTesting \033[32;1mCOMPLETE\033[0m")
     plt.plot(K, I)
+    plt.show()
 
 
 if __name__ == '__main__':
-    getData(path_handler.path_to_specific_dataset("annotations"))
+    vector = getData(path_handler.path_to_specific_dataset("annotations"))
+    determine_the_amount_of_classes([10, 30, 63, 100, 150, 200, 300, 400, 500, 630, 631], vector)
