@@ -13,27 +13,21 @@ from codebase.utillib.annotations import on_fail_ask_user_politely
 from codebase import path_handler
 
 
-@on_fail_ask_user_politely
-def getData(path: str, norm=normalizer.Normalizer()) -> np.ndarray:
-    """
-    Returns the data as a numpy array that is contained within the guitar database
-
-    We use normalizer.Normalizer() as a default value for the norm key word because
-    we want it to be shared across executions by default.
-    """
+def readyEmbedder(path, verbose: bool = True, norm=normalizer.Normalizer) -> tuple[embed.Embedder, int]:
     choices = os.listdir(path)
     embedder = embed.Embedder()
     note_count = 0
-    print("\033[36;1mStarting to parse database\033[0m to evaluate embedding size")
+    if verbose:
+        print("\033[36;1mStarting to parse database\033[0m to evaluate embedding size")
 
     # first pass for embedding and normalizing pre-computing.
     for i, choice in enumerate(choices):
-
-        # print which file is being read.
-        print(f"\rEmbedder \033[33;1mcomputing\033[0m (file \033[36m{i}\033[0m / "
-              f"\033[36m{len(choices)}\033[0m, found \033[34;1m{len(embedder)}\033[0m classes, "
-              f"read \033[34;1m{note_count}\033[0m).",
-              end="")
+        if verbose:
+            # print which file is being read.
+            print(f"\rEmbedder \033[33;1mcomputing\033[0m (file \033[36m{i}\033[0m / "
+                  f"\033[36m{len(choices)}\033[0m, found \033[34;1m{len(embedder)}\033[0m classes, "
+                  f"read \033[34;1m{note_count}\033[0m).",
+                  end="")
 
         jam = jams.load(path + ("/" if not path.endswith("/") else "") + choice)
         for instructed_cords in jam.search(namespace="chord"):
@@ -43,8 +37,44 @@ def getData(path: str, norm=normalizer.Normalizer()) -> np.ndarray:
                 note_count += 1
                 embedder.add_value(sample["value"])
                 norm.fit_add(sample["duration"])
+    return embedder, note_count
 
-    print("\rEmbedder \033[32;1mready\033[0m", " " * 64)
+
+@on_fail_ask_user_politely
+def getData(path: str, norm=normalizer.Normalizer(), embedder:embed.Embedder=None, note_count:int = None) -> np.ndarray:
+    """
+    Returns the data as a numpy array that is contained within the guitar database
+
+    We use normalizer.Normalizer() as a default value for the norm key word because
+    we want it to be shared across executions by default.
+    """
+    choices = os.listdir(path)
+    if embedder is None or note_count is None:
+        embedder = embed.Embedder()
+        note_count = 0
+        print("\033[36;1mStarting to parse database\033[0m to evaluate embedding size")
+
+        # first pass for embedding and normalizing pre-computing.
+        for i, choice in enumerate(choices):
+
+            # print which file is being read.
+            print(f"\rEmbedder \033[33;1mcomputing\033[0m (file \033[36m{i}\033[0m / "
+                  f"\033[36m{len(choices)}\033[0m, found \033[34;1m{len(embedder)}\033[0m classes, "
+                  f"read \033[34;1m{note_count}\033[0m).",
+                  end="")
+
+            jam = jams.load(path + ("/" if not path.endswith("/") else "") + choice)
+            for instructed_cords in jam.search(namespace="chord"):
+                chord = json.loads(instructed_cords.__str__())
+                data = chord["data"]
+                for sample in data:
+                    note_count += 1
+                    embedder.add_value(sample["value"])
+                    norm.fit_add(sample["duration"])
+
+        print("\rEmbedder \033[32;1mready\033[0m", " " * 64)
+    else:
+        print("\rEmbedder \033[32;1mFound\033[0m", " " * 64)
     print(f"\033[36;1mCreating data vector for the \033[34;1m{note_count}\033[36;1m notes found \033[0m")
 
     # we make the vector
