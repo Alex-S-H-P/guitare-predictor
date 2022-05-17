@@ -38,10 +38,10 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
     try:
         with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "r") as file:
             x, y = pickle.load(file)
-    except (FileNotFoundError,  pickle.PickleError) as e:
+    except (FileNotFoundError, pickle.PickleError) as e:
         print(f"\033[31;1m{e}\033[0m")
 
-        sacr = [el2.split(".")[0][:-len("_hex")] for el2 in os.listdir(musics_path) ]
+        sacr = [el2.split(".")[0][:-len("_hex")] for el2 in os.listdir(musics_path)]
         choices = [
             el.split(".")[0]
             for el in os.listdir(annotations_path)
@@ -67,16 +67,17 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
             times = librosa.core.frames_to_time(specs[0], sr=sr, n_fft=n_features, hop_length=hop_len)
 
             for time_idx, timeStamp in enumerate(times):
-                print(f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36;1m{i}\033[0m /",
-                      f"\033[34m{len(choices)}\033[0m",
-                      f"TimeIndex : \033[36;1m{time_idx}\033[0m).",
-                      end="")
+                if time_idx % 50 == 0:
+                    print(f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36;1m{i}\033[0m /",
+                          f"\033[34m{len(choices)}\033[0m",
+                          f"TimeIndex : \033[36;1m{time_idx}\033[0m).",
+                          end="")
                 token = getAnnotation(timeStamp, jamFile)
                 try:
                     x.append(list(specs[:, time_idx]))
                     y.append(embedder.map[token][0])
                 except KeyError as k:
-                    print("\033[33;1mCaught", k)
+                    print("\r\033[33;1mCaught", k, " "*72)
         with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "w") as file:
             pickle.dump((x, y), file)
     print(x, y, sep="\n")
@@ -89,4 +90,3 @@ if __name__ == '__main__':
     models_path = path_handler.GNRL_PATH_TO_DATA_SET + "../models/"
     with open(models_path + "RTF.pickle", "w") as file:
         pickle.dump(m, file)
-
