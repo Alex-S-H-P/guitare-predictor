@@ -13,7 +13,7 @@ from codebase.utillib.annotations import on_fail_ask_user_politely
 from codebase import path_handler
 
 
-def readyEmbedder(path, verbose: bool = True, norm=normalizer.Normalizer) -> tuple[embed.Embedder, int]:
+def readyEmbedder(path, verbose: bool = True, norm=normalizer.Normalizer(), jam=None) -> tuple[embed.Embedder, int]:
     choices = os.listdir(path)
     embedder = embed.Embedder()
     note_count = 0
@@ -30,13 +30,14 @@ def readyEmbedder(path, verbose: bool = True, norm=normalizer.Normalizer) -> tup
                   end="")
 
         jam = jams.load(path + ("/" if not path.endswith("/") else "") + choice)
-        for instructed_cords in jam.search(namespace="chord"):
-            chord = json.loads(instructed_cords.__str__())
-            data = chord["data"]
-            for sample in data:
-                note_count += 1
-                embedder.add_value(sample["value"])
-                norm.fit_add(sample["duration"])
+        data = jam.search(namespace="chord")[1]["data"]
+        for sample in data:
+            note_count += 1
+            embedder.add_value(sample.value)
+            norm.fit_add(sample.duration)
+    if verbose:
+        print(f"\rEmbedder \033[32;1mDONE\033[0m "
+              f"(\033[36;1m{note_count}\033[0m notes found, \033[36;1m{len(embedder)}\033[0m classes)")
     return embedder, note_count
 
 
