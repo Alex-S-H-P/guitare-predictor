@@ -35,41 +35,50 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
     x: list[list[float]] = []
     y: list[int] = []
 
-    sacr = [el2.split(".")[0][:-len("_hex")] for el2 in os.listdir(musics_path) ]
-    choices = [
-        el.split(".")[0]
-        for el in os.listdir(annotations_path)
-        if el.split(".")[0] in sacr
-    ]
-    del sacr
+    try:
+        with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "r") as file:
+            x, y = pickle.load(file)
+    except (FileNotFoundError,  pickle.PickleError) as e:
+        print(f"\033[31;1m{e}\033[0m")
 
-    for i, choice in enumerate(choices):
-        sound_y, sr = librosa.load(musics_path + (
-            "/" if not musics_path.endswith("/") else ""
-        ) + choice + "_hex.wav")
-        # onset_env = librosa.onset.onset_strength(y=sound_y, sr=sr)
-        tempo = librosa.beat.tempo(y=sound_y, sr=sr)
-        tps = tempo[0] / 60
-        jamFile = jams.load(annotations_path + (
-            "/" if not annotations_path.endswith("/") else ""
-        ) + choice + ".jams")
+        sacr = [el2.split(".")[0][:-len("_hex")] for el2 in os.listdir(musics_path) ]
+        choices = [
+            el.split(".")[0]
+            for el in os.listdir(annotations_path)
+            if el.split(".")[0] in sacr
+        ]
+        del sacr
 
-        hop_len = int(sr / (tps * overSamplingRate) + .5)
-        # tps in beats/s, overSamplingRate in measures/beats, sr in measures/s
+        for i, choice in enumerate(choices):
+            sound_y, sr = librosa.load(musics_path + (
+                "/" if not musics_path.endswith("/") else ""
+            ) + choice + "_hex.wav")
+            # onset_env = librosa.onset.onset_strength(y=sound_y, sr=sr)
+            tempo = librosa.beat.tempo(y=sound_y, sr=sr)
+            tps = tempo[0] / 60
+            jamFile = jams.load(annotations_path + (
+                "/" if not annotations_path.endswith("/") else ""
+            ) + choice + ".jams")
 
-        specs = np.abs(librosa.core.stft(sound_y, n_fft=n_features, hop_length=hop_len))
-        times = librosa.core.frames_to_time(specs[0], sr=sr, n_fft=n_features, hop_length=hop_len)
+            hop_len = int(sr / (tps * overSamplingRate) + .5)
+            # tps in beats/s, overSamplingRate in measures/beats, sr in measures/s
 
-        for time_idx, timeStamp in enumerate(times):
-            print(f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36m{i}\033[0m / {len(choices)}. "
-                  f"TimeIndex : {time_idx}).",
-                  end="")
-            token = getAnnotation(timeStamp, jamFile)
-            try:
-                x.append(list(specs[:, time_idx]))
-                y.append(embedder.map[token][0])
-            except KeyError as k:
-                print("\033[33;1mCaught", k)
+            specs = np.abs(librosa.core.stft(sound_y, n_fft=n_features, hop_length=hop_len))
+            times = librosa.core.frames_to_time(specs[0], sr=sr, n_fft=n_features, hop_length=hop_len)
+
+            for time_idx, timeStamp in enumerate(times):
+                print(f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36;1m{i}\033[0m /",
+                      f"\033[34m{len(choices)}\033[0m",
+                      f"TimeIndex : \033[36;1m{time_idx}\033[0m).",
+                      end="")
+                token = getAnnotation(timeStamp, jamFile)
+                try:
+                    x.append(list(specs[:, time_idx]))
+                    y.append(embedder.map[token][0])
+                except KeyError as k:
+                    print("\033[33;1mCaught", k)
+        with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "w") as file:
+            pickle.dump((x, y), file)
     print(x, y, sep="\n")
     model.fit(x, y)
 
