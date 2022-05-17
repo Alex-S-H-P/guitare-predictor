@@ -1,6 +1,6 @@
 import jams
 import os
-import path_handler
+import codebase.path_handler
 import matplotlib.pyplot as plt
 import random
 import codebase.interpreter as itp
