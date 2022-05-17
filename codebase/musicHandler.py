@@ -1,13 +1,19 @@
 import os
 import pickle
+from typing import TextIO
 
 import jams
 import librosa
 import numpy as np
 
-import path_handler
-import classify
-from sklearn.ensemble import RandomForestClassifier
+try:
+    import codebase.path_handler as path_handler
+    import codebase.classify as classify
+except ModuleNotFoundError:
+    import path_handler
+    import classify
+finally:
+    from sklearn.ensemble import RandomForestClassifier
 
 annotations_path = path_handler.path_to_specific_dataset("annotations")
 musics_path = path_handler.path_to_specific_dataset("musics")
@@ -34,6 +40,7 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
     print("\033[36;1mStarting to parse database\033[0m to established twinned x and y data")
     x: list[list[float]] = []
     y: list[int] = []
+    file: TextIO
 
     try:
         with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "r") as file:
@@ -90,3 +97,4 @@ if __name__ == '__main__':
     models_path = path_handler.GNRL_PATH_TO_DATA_SET + "../models/"
     with open(models_path + "RTF.pickle", "w") as file:
         pickle.dump(m, file)
+    del file
