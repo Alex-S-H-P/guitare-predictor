@@ -45,7 +45,7 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
     try:
         with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "rb") as file:
             x, y = pickle.load(file)
-    except (FileNotFoundError, pickle.PickleError) as e:
+    except (FileNotFoundError, pickle.PickleError, EOFError) as e:
         print(f"\033[31;1m{e}\033[0m")
 
         sacr = [el2.split(".")[0][:-len("_hex")] for el2 in os.listdir(musics_path)]
