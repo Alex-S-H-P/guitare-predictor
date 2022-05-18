@@ -43,7 +43,7 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
     file: TextIO
 
     try:
-        with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "r") as file:
+        with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "rb") as file:
             x, y = pickle.load(file)
     except (FileNotFoundError, pickle.PickleError) as e:
         print(f"\033[31;1m{e}\033[0m")
@@ -85,7 +85,7 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
                     y.append(embedder.map[token][0])
                 except KeyError as k:
                     print("\r\033[33;1mCaught", k, " "*72)
-        with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "w") as file:
+        with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "wb") as file:
             pickle.dump((x, y), file)
     print(x, y, sep="\n")
     model.fit(x, y)
@@ -95,6 +95,6 @@ if __name__ == '__main__':
     m = build_model()
     teach(m, "full data-set")
     models_path = path_handler.GNRL_PATH_TO_DATA_SET + "../models/"
-    with open(models_path + "RTF.pickle", "w") as file:
+    with open(models_path + "RTF.pickle", "wb") as file:
         pickle.dump(m, file)
     del file
