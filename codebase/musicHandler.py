@@ -89,12 +89,16 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
             pickle.dump((x, y), file)
     print(x, y, sep="\n")
     model.fit(x, y)
+    return embedder
 
 
 if __name__ == '__main__':
     m = build_model()
-    teach(m, "full data-set")
+    embedder = teach(m, "full data-set")
     models_path = path_handler.GNRL_PATH_TO_DATA_SET + "../models/"
     with open(models_path + "RTF.pickle", "wb") as file:
         pickle.dump(m, file)
+    del file
+    with open(models_path + "EMBED.pickle", "wb") as file:
+        pickle.dump(embedder, file)
     del file
