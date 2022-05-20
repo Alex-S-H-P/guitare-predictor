@@ -66,10 +66,11 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
 
                 x, y = pickle.load(file)
                 assert isinstance(x, list) and isinstance(y, list)\
-                    and isinstance(x[0], list) and isinstance(y[0], int)\
-                    and isinstance(x[0][0], float), f"The data is not correctly stored/extracted. " \
-                                                    f"File {choices}.pickle is corrupted"
-        except (FileNotFoundError, pickle.PickleError, EOFError):
+                    and isinstance(x[0], list) and isinstance(y[0], int),\
+                                                    f"The data is not correctly stored/extracted. " \
+                                                    f"File {choice}.pickle is corrupted {(x[0][0], y[0])}, " \
+                                                    f"{len(x), len(y)}, {[isinstance(x, list),  isinstance(y, list), isinstance(x[0], list) , isinstance(y[0], int)]}"
+        except (FileNotFoundError, pickle.PickleError, EOFError, AssertionError) as e:
 
             sound_y, sr = librosa.load(musics_path + (
                 "/" if not musics_path.endswith("/") else ""
@@ -89,7 +90,7 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
 
             for time_idx, timeStamp in enumerate(times):
                 if time_idx % 50 == 0:
-                    print(f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36;1m{i}\033[0m /",
+                    print(e, f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36;1m{i}\033[0m /",
                           f"\033[34m{len(choices)}\033[0m",
                           f"TimeIndex : \033[36;1m{time_idx}\033[0m).",
                           end="")
