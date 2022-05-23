@@ -1,5 +1,6 @@
 import os
 import pickle
+import typing
 from typing import TextIO
 
 import jams
@@ -42,21 +43,35 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
     y: list[int] = []
     file: TextIO
 
-    try:
-        with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "rb") as file:
-            x, y = pickle.load(file)
-    except (FileNotFoundError, pickle.PickleError) as e:
-        print(f"\033[31;1m{e}\033[0m")
 
-        sacr = [el2.split(".")[0][:-len("_hex")] for el2 in os.listdir(musics_path)]
-        choices = [
-            el.split(".")[0]
-            for el in os.listdir(annotations_path)
-            if el.split(".")[0] in sacr
-        ]
-        del sacr
 
-        for i, choice in enumerate(choices):
+    sacr = [el2.split(".")[0][:-len("_hex")] for el2 in os.listdir(musics_path)]
+    choices = [
+        el.split(".")[0]
+        for el in os.listdir(annotations_path)
+        if el.split(".")[0] in sacr
+    ]
+    del sacr
+
+    for i, choice in enumerate(choices):
+
+        print(f"\rDatabase \033[33;1mtrying to find existing database\033[0m(file \033[36;1m{i}\033[0m /",
+              f"\033[34m{len(choices)}\033[0m)",
+              end="")
+        try:
+            with open((p := path_handler.path_to_specific_dataset("xy"))
+                      + ("/" if p[-1] != "/" else "")
+                      + choice + ".pickle", "rb") \
+                    as file:
+
+                x, y = pickle.load(file)
+                assert isinstance(x, list) and isinstance(y, list)\
+                    and isinstance(x[0], list) and isinstance(y[0], int),\
+                                                    f"The data is not correctly stored/extracted. " \
+                                                    f"File {choice}.pickle is corrupted {(x[0][0], y[0])}, " \
+                                                    f"{len(x), len(y)}, {[isinstance(x, list),  isinstance(y, list), isinstance(x[0], list) , isinstance(y[0], int)]}"
+        except (FileNotFoundError, pickle.PickleError, EOFError, AssertionError) as e:
+
             sound_y, sr = librosa.load(musics_path + (
                 "/" if not musics_path.endswith("/") else ""
             ) + choice + "_hex.wav")
@@ -75,7 +90,7 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
 
             for time_idx, timeStamp in enumerate(times):
                 if time_idx % 50 == 0:
-                    print(f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36;1m{i}\033[0m /",
+                    print(e, f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36;1m{i}\033[0m /",
                           f"\033[34m{len(choices)}\033[0m",
                           f"TimeIndex : \033[36;1m{time_idx}\033[0m).",
                           end="")
@@ -84,17 +99,26 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
                     x.append(list(specs[:, time_idx]))
                     y.append(embedder.map[token][0])
                 except KeyError as k:
-                    print("\r\033[33;1mCaught", k, " "*72)
-        with open(path_handler.GNRL_PATH_TO_DATA_SET + "xy.pickle", "wb") as file:
-            pickle.dump((x, y), file)
-    print(x, y, sep="\n")
-    model.fit(x, y)
+                    print("\r\033[33;1mCaught", k, " " * 72)
+
+            # storing the data
+            with open((p := path_handler.path_to_specific_dataset("xy"))
+                      + ("/" if p[-1] != "/" else "")
+                      + choice + ".pickle", "wb") \
+                    as file:
+                pickle.dump((x, y), file)
+
+        model.fit(np.array(x), np.array(y))
+    return embedder
 
 
 if __name__ == '__main__':
     m = build_model()
-    teach(m, "full data-set")
+    embedder = teach(m, "full data-set")
     models_path = path_handler.GNRL_PATH_TO_DATA_SET + "../models/"
     with open(models_path + "RTF.pickle", "wb") as file:
         pickle.dump(m, file)
+    del file
+    with open(models_path + "EMBED.pickle", "wb") as file:
+        pickle.dump(embedder, file)
     del file
