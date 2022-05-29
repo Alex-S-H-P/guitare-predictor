@@ -33,6 +33,21 @@ def getAnnotation(timeStamp: float, jamFile: jams.JAMS) -> str:
             return annotation.value
 
 
+def custom_generator(x_or_y: str):
+    assert x_or_y.lower() in ["x", "y"]
+    returnX = x_or_y.lower() == "x"
+
+    for choice in os.listdir(path_handler.path_to_specific_dataset("xy")):
+        with open((p := path_handler.path_to_specific_dataset("xy"))
+                  + ("/" if p[-1] != "/" else "")
+                  + choice, "rb") \
+                as file:
+            d = pickle.load(file)
+            l = d[0] if returnX else d[1]
+            for sub in l:
+                yield l
+
+
 def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: int = 48, n_features=128):
     """teaches a model"""
     assert isinstance(how_many, int) or how_many.strip(' -\t\n')
@@ -42,8 +57,6 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
     x: list[list[float]] = []
     y: list[int] = []
     file: TextIO
-
-
 
     sacr = [el2.split(".")[0][:-len("_hex")] for el2 in os.listdir(musics_path)]
     choices = [
@@ -65,19 +78,21 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
                     as file:
 
                 x, y = pickle.load(file)
-                assert isinstance(x, list) and isinstance(y, list)\
-                    and isinstance(x[0], list) and isinstance(y[0], int),\
-                                                    f"The data is not correctly stored/extracted. " \
-                                                    f"File {choice}.pickle is corrupted {(x[0][0], y[0])}, " \
-                                                    f"{len(x), len(y)}, {[isinstance(x, list),  isinstance(y, list), isinstance(x[0], list) , isinstance(y[0], int)]}"
+                assert isinstance(x, list) and isinstance(y, list) \
+                       and isinstance(x[0], list) and isinstance(y[0], int), \
+                    f"The data is not correctly stored/extracted. " \
+                    f"File {choice}.pickle is corrupted {(x[0][0], y[0])}, " \
+                    f"{len(x), len(y)}, {[isinstance(x, list), isinstance(y, list), isinstance(x[0], list), isinstance(y[0], int)]}"
         except (FileNotFoundError, pickle.PickleError, EOFError, AssertionError) as e:
+
+            print(e)
 
             sound_y, sr = librosa.load(musics_path + (
                 "/" if not musics_path.endswith("/") else ""
             ) + choice + "_hex.wav")
             # onset_env = librosa.onset.onset_strength(y=sound_y, sr=sr)
             tempo = librosa.beat.tempo(y=sound_y, sr=sr)
-            tps = tempo[0] / 60
+            tps = tempo[0] * 100 / 60
             jamFile = jams.load(annotations_path + (
                 "/" if not annotations_path.endswith("/") else ""
             ) + choice + ".jams")
@@ -90,7 +105,7 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
 
             for time_idx, timeStamp in enumerate(times):
                 if time_idx % 50 == 0:
-                    print(e, f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36;1m{i}\033[0m /",
+                    print(f"\rDatabase \033[33;1mconnecting \033[0m(file \033[36;1m{i}\033[0m /",
                           f"\033[34m{len(choices)}\033[0m",
                           f"TimeIndex : \033[36;1m{time_idx}\033[0m).",
                           end="")
@@ -108,7 +123,7 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
                     as file:
                 pickle.dump((x, y), file)
 
-        model.fit(np.array(x), np.array(y))
+    model.fit(custom_generator("x"), custom_generator("y"))
     return embedder
 
 

@@ -30,6 +30,12 @@ class Embedder:
                 return k
         raise KeyError(f"Index {i} found. Could hasn't generated an embedding for this key")
 
+    def flip(self, i: int) -> str:
+        for k in self.map:
+            if self.map[k][0] == i:
+                return k
+        raise KeyError(f"Index {i} found. Could hasn't generated an embedding for this key")
+
     def __len__(self) -> int:
         return len(self.map)
 
