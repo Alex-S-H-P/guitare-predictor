@@ -33,8 +33,9 @@ def load() -> tuple[embedder.Embedder, RandomForestClassifier]:
 
 manualCommands: dict[str, typing.Callable] = {}
 MESURES_PAR_BATTEMENT: float = 60
-mod:RandomForestClassifier
-embed:embedder.Embedder
+mod: RandomForestClassifier
+embed: embedder.Embedder
+
 
 def main(n_features: int = 128):
     input_str: str = ""
@@ -61,11 +62,11 @@ def main(n_features: int = 128):
                 times = librosa.core.frames_to_time(specs[0], sr=sr, n_fft=n_features, hop_length=hop_len)
 
                 result = [embed.flip(i) + "\n"
-                                    for i in mod.predict([
-                                                            list(
-                                                                 specs[:, time_idx]
-                                                                 ) for time_idx, _ in enumerate(times)
-                                                          ])
+                          for i in mod.predict([
+                                            list(
+                                                specs[:, time_idx]
+                                                ) for time_idx, _ in enumerate(times)
+                           ])
                           ]
                 print("Annotations \033[32;1mcréées\033[0m")
                 print("Où stocker le résultat ?")
