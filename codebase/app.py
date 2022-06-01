@@ -49,7 +49,12 @@ def main(n_features: int = 128):
         finally:
             if input_str in manualCommands:
                 manualCommands[input_str]()
-            if os.path.exists(input_str):
+            elif os.path.isdir(input_str):
+                print("File \033[31;1mis a directory\033[0m")
+                choices = os.listdir()
+                choices = [f"\033[37;1m{choice}\033[0m/" if os.path.isdir(choice) else f"\033[36;1m{choice}\033[0m" for choice in choices]
+                print("Choose among :", *choices, sep="\n\t - ")
+            elif os.path.exists(input_str):
                 print("File \033[32;1mfound\033[0m")
                 sound_y, sr = librosa.load(input_str)
                 # onset_env = librosa.onset.onset_strength(y=sound_y, sr=sr)
