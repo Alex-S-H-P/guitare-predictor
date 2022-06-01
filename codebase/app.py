@@ -1,7 +1,7 @@
 import os
 import pickle
 import typing
-
+import readline
 import librosa
 import numpy as np
 
@@ -51,8 +51,14 @@ def main(n_features: int = 128):
                 manualCommands[input_str]()
             elif os.path.isdir(input_str):
                 print("File \033[31;1mis a directory\033[0m")
-                choices = os.listdir()
-                choices = [f"\033[37;1m{choice}\033[0m/" if os.path.isdir(choice) else f"\033[36;1m{choice}\033[0m" for choice in choices]
+                choices = os.listdir(input_str)
+                choices = [f"\033[37;1m{choice}\033[0m/"
+                           if os.path.isdir(
+                                input_str + (
+                                    "/" if input_str[-1] != "/" else ""
+                                ) + choice
+                           )
+                           else f"\033[36;1m{choice}\033[0m" for choice in choices]
                 print("Choose among :", *choices, sep="\n\t - ")
             elif os.path.exists(input_str):
                 print("File \033[32;1mfound\033[0m")
@@ -85,8 +91,8 @@ def main(n_features: int = 128):
                     i = max([i for i in range(len(input_str)) if input_str[i] == "/"])
                     if os.path.exists(input_str[:i]):
                         print("Maybe you meant : ")
-                        for f in os.listdir():
-                            print(f"\t> {f}")
+                        for f in os.listdir(input_str[:i]):
+                            print("\t> " + ("\033[36;1m" if input_str[i+1:] in f else "\033[37;1m") + f"{f}\033[0m")
 
 
 if __name__ == '__main__':
