@@ -1,18 +1,19 @@
 import os
 import pickle
+import sys
 import typing
 import readline
 import librosa
 import numpy as np
 
-try:
-    from codebase import path_handler
-    from codebase.utillib import embedder
-except ModuleNotFoundError:
-    import path_handler
-    from utillib import embedder
-finally:
-    from sklearn.ensemble import RandomForestClassifier
+path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if not path in sys.path:
+    sys.path.insert(1, path)
+del path
+
+from codebase import path_handler
+from codebase.utillib import embedder
+from sklearn.ensemble import RandomForestClassifier
 
 
 def load() -> tuple[embedder.Embedder, RandomForestClassifier]:
@@ -92,7 +93,13 @@ def main(n_features: int = 128):
                     if os.path.exists(input_str[:i]):
                         print("Maybe you meant : ")
                         for f in os.listdir(input_str[:i]):
-                            print("\t> " + ("\033[36;1m" if input_str[i+1:] in f else "\033[37;1m") + f"{f}\033[0m")
+                            print("\t> " +
+                                  ("\033[36;1m"
+                                   if input_str[i+1:] in f else "\033[37;1m") +
+                                  f"{f}\033[0m" +
+                                  ("/" if os.path.isdir(input_str[:i] + f)
+                                   else "")
+                                  )
 
 
 if __name__ == '__main__':
