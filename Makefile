@@ -1,5 +1,6 @@
 all: requirements.txt dataset/models/RTF.pickle
 	@echo "\033[32;1mDone\033[0m"
+	bash app.sh
 dataset/models/RTF.pickle dataset/models/EMBED.pickle: dataset/musics/00_BN1-129-Eb_comp_hex.wav
 	python3.10 -m codebase.musicHandler
 dataset/music/00_BN1-129-Eb_comp_hex.wav:
