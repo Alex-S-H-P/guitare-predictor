@@ -14,6 +14,7 @@ del path
 from codebase import path_handler
 from codebase.utillib import embedder
 from sklearn.ensemble import RandomForestClassifier
+from codebase.utillib import folder
 
 
 def load() -> tuple[embedder.Embedder, RandomForestClassifier]:
@@ -38,7 +39,7 @@ mod: RandomForestClassifier
 embed: embedder.Embedder
 
 
-def main(n_features: int = 128):
+def main(n_features: int = 128, noteChangeThreshold=75):
     input_str: str = ""
     print("\r\033[37;1m", "-" * 42, "GUITARE-PREDICTOR", "-" * 42, "\033[0m", sep="\n")
     while True:
@@ -80,6 +81,11 @@ def main(n_features: int = 128):
                                                 ) for time_idx, _ in enumerate(times)
                            ])
                           ]
+                beat_per_minute = librosa.beat.tempo(y=sound_y, sr=sr)
+                result = folder.foldArrayOfNotes(result, beats_per_minute=beat_per_minute,
+                                                 metric_per_beats=MESURES_PAR_BATTEMENT,
+                                                 noteChangeThreshold=noteChangeThreshold,
+                                                 sliding_size=int(beat_per_minute * MESURES_PAR_BATTEMENT / 600 +.5))
                 print("Annotations \033[32;1mcréées\033[0m")
                 print("Où stocker le résultat ?")
                 r = input(">>> ")
