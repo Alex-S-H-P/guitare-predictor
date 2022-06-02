@@ -44,6 +44,7 @@ def main(n_features: int = 128, noteChangeThreshold=75):
     print("\r\033[37;1m", "-" * 42, "GUITARE-PREDICTOR", "-" * 42, "\033[0m", sep="\n")
     while True:
         try:
+            print("Quel \033[36;1mfichier sonore\033[0m traiter ?")
             input_str = input(">>> ")
         except EOFError:
             print("\n" + "\033[36;1mBye !\033[0m")
