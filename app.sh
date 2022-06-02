@@ -1,2 +1,1 @@
-cd codebase
-python3.10 "app.py"
+python3.10 codebase/app.py

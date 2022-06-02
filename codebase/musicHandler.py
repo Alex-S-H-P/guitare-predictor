@@ -33,7 +33,7 @@ def getAnnotation(timeStamp: float, jamFile: jams.JAMS) -> str:
             return annotation.value
 
 
-def custom_generator(x_or_y: str):
+def custom_generator(x_or_y: str)->typing.Generator[list[float], None, None]:
     assert x_or_y.lower() in ["x", "y"]
     returnX = x_or_y.lower() == "x"
 
@@ -48,14 +48,12 @@ def custom_generator(x_or_y: str):
                 yield l
 
 
-def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: int = 48, n_features=128):
+def teach(model: RandomForestClassifier, how_many: str | int, metrics_per_beat: int = 48, n_features=128):
     """teaches a model"""
     assert isinstance(how_many, int) or how_many.strip(' -\t\n')
 
     embedder, note_count = classify.readyEmbedder(annotations_path)
     print("\033[36;1mStarting to parse database\033[0m to established twinned x and y data")
-    x: list[list[float]] = []
-    y: list[int] = []
     file: TextIO
 
     sacr = [el2.split(".")[0][:-len("_hex")] for el2 in os.listdir(musics_path)]
@@ -71,6 +69,8 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
         print(f"\rDatabase \033[33;1mtrying to find existing database\033[0m(file \033[36;1m{i}\033[0m /",
               f"\033[34m{len(choices)}\033[0m)",
               end="")
+        x: list[list[float]] = []
+        y: list[int] = []
         try:
             with open((p := path_handler.path_to_specific_dataset("xy"))
                       + ("/" if p[-1] != "/" else "")
@@ -91,13 +91,13 @@ def teach(model: RandomForestClassifier, how_many: str | int, overSamplingRate: 
                 "/" if not musics_path.endswith("/") else ""
             ) + choice + "_hex.wav")
             # onset_env = librosa.onset.onset_strength(y=sound_y, sr=sr)
-            tempo = librosa.beat.tempo(y=sound_y, sr=sr)
-            tps = tempo[0] * 100 / 60
+            beat_per_minute = librosa.beat.tempo(y=sound_y, sr=sr)
+            tps = beat_per_minute[0] * metrics_per_beat / 60  # metric per second
             jamFile = jams.load(annotations_path + (
                 "/" if not annotations_path.endswith("/") else ""
             ) + choice + ".jams")
 
-            hop_len = int(sr / (tps * overSamplingRate) + .5)
+            hop_len = int(sr / (tps * metrics_per_beat) + .5)
             # tps in beats/s, overSamplingRate in measures/beats, sr in measures/s
 
             specs = np.abs(librosa.core.stft(sound_y, n_fft=n_features, hop_length=hop_len))
