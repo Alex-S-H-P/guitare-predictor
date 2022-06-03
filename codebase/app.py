@@ -82,7 +82,7 @@ def main(n_features: int = 128, noteChangeThreshold=75):
                                                 ) for time_idx, _ in enumerate(times)
                            ])
                           ]
-                beat_per_minute = librosa.beat.tempo(y=sound_y, sr=sr)
+                beat_per_minute = librosa.beat.tempo(y=sound_y, sr=sr)[0]
                 result = folder.foldArrayOfNotes(result, beats_per_minute=beat_per_minute,
                                                  metric_per_beats=MESURES_PAR_BATTEMENT,
                                                  noteChangeThreshold=noteChangeThreshold,
