@@ -39,7 +39,7 @@ mod: RandomForestClassifier
 embed: embedder.Embedder
 
 
-def main(n_features: int = 128, noteChangeThreshold=75):
+def main(n_features: int = 128, noteChangeThreshold=.75):
     input_str: str = ""
     print("\r\033[37;1m", "-" * 42, "GUITARE-PREDICTOR", "-" * 42, "\033[0m", sep="\n")
     while True:
