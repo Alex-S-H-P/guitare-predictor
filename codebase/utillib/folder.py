@@ -77,7 +77,7 @@ def foldArrayOfNotes(array: list[str], beats_per_minute: int | float, metric_per
         Defaults to the number of metrics in a second
     :return: the array that, to a note, indicates length in beats, in seconds, as well as the note played.
     """
-    r: Partition = [{"start_index": 0}]
+    r : Partition = [{"start_index": 0}]
     if sliding_size is None:
         sliding_size = min(int(beats_per_minute * metric_per_beats / 60), 3)  # the number of metrics in a second
     slidingWindow: Queue[str] = Queue(sliding_size)
@@ -119,7 +119,7 @@ def foldArrayOfNotes(array: list[str], beats_per_minute: int | float, metric_per
             return range(n["start_index"], len(array))
 
     for j, s in enumerate(r):
-        r[j]["note"] = maxOccur([array[i] for i in getRange(s)])
+        r[j]["note"] = maxOccur([array[i] for i in getRange(s)])[:-1]
         r[j]["beats"] = r[j]["len"] / metric_per_beats  # le nombre de battements
         r[j]["duration"] = r[j]["beats"] * 60 / beats_per_minute  # le nombre de secondes
     return r

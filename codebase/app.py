@@ -5,6 +5,10 @@ import typing
 import readline
 import librosa
 import numpy as np
+import json
+import librosa.display
+import keyEstimator as k
+import predict_with_key as pkey
 
 path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if not path in sys.path:
@@ -66,6 +70,10 @@ def main(n_features: int = 128, noteChangeThreshold=.75):
             elif os.path.exists(input_str):
                 print("File \033[32;1mfound\033[0m")
                 sound_y, sr = librosa.load(input_str)
+                y_harmonic, y_percussive = librosa.effects.hpss(sound_y)
+
+                key_estimator = k.keyEstimator(y_harmonic, sr)
+                key_correlations = key_estimator.correlations()
                 # onset_env = librosa.onset.onset_strength(y=sound_y, sr=sr)
                 tempo = librosa.beat.tempo(y=sound_y, sr=sr)
 
@@ -75,12 +83,20 @@ def main(n_features: int = 128, noteChangeThreshold=.75):
                 specs = np.abs(librosa.core.stft(sound_y, n_fft=n_features, hop_length=hop_len))
                 times = librosa.core.frames_to_time(specs[0], sr=sr, n_fft=n_features, hop_length=hop_len)
 
-                result = [embed.flip(i) + "\n"
-                          for i in mod.predict([
+                all_predictions=[[embed.flip(i) + "\n"
+                          for i in tree.predict([
                                             list(
                                                 specs[:, time_idx]
                                                 ) for time_idx, _ in enumerate(times)
                            ])
+                          ] for tree in mod.estimators_]
+
+                result = [embed.flip(i) + "\n"
+                          for i in pkey.predict_with_key(mod, all_predictions, [
+                                            list(
+                                                specs[:, time_idx]
+                                                ) for time_idx, _ in enumerate(times)
+                           ], key_correlations)
                           ]
                 beat_per_minute = librosa.beat.tempo(y=sound_y, sr=sr)[0]
                 result = folder.foldArrayOfNotes(result, beats_per_minute=beat_per_minute,
@@ -91,7 +107,7 @@ def main(n_features: int = 128, noteChangeThreshold=.75):
                 print("Où stocker le résultat ?")
                 r = input(">>> ")
                 with open(r, "w") as file2:
-                    file2.writelines(result)
+                    file2.writelines(json.dumps(result))
 
             else:
                 print("File \033[31;1mnot found\033[0m")
