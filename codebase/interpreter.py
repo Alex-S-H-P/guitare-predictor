@@ -3,11 +3,11 @@ interpreter
 @Author : marl : https://github.com/marl
 """
 import librosa
+import tempfile
 import numpy as np
 import pandas as pd
 import pretty_midi
 from matplotlib import lines as mlines, pyplot as plt
-
 
 def jams_to_midi(jam, q=1):
     # q = 1: with pitch bend. q = 0: without pitch bend.
@@ -44,6 +44,7 @@ def sonify_jams(jam, fpath=None, q=1):
 
 
 def visualize_jams_note(jam, save_path=None):
+    plt.rcParams.update({'font.size': 6})
     style_dict = {0: 'r', 1: 'y', 2: 'b', 3: '#FF7F50', 4: 'g', 5: '#800080'}
     string_dict = {0: 'E', 1: 'A', 2: 'D', 3: 'G', 4: 'B', 5: 'e'}
     s = 0
@@ -74,6 +75,7 @@ def visualize_jams_note(jam, save_path=None):
 
 
 def visualize_jams_pt(jam, save_path=None):
+    plt.rcParams.update({'font.size': 6})
     style_dict = {0: 'r', 1: 'y', 2: 'b', 3: '#FF7F50', 4: 'g', 5: '#800080'}
     string_dict = {0: 'E', 1: 'A', 2: 'D', 3: 'G', 4: 'B', 5: 'e'}
     s = 0
@@ -117,6 +119,7 @@ def visualize_jams_pt(jam, save_path=None):
 
 
 def visualize_jams_onset(jam, save_path=None, low=None, high=None):
+    plt.rcParams.update({'font.size': 6})
     style_dict = {0: 'r', 1: 'y', 2: 'b', 3: '#FF7F50', 4: 'g', 5: '#800080'}
     string_dict = {0: 'E', 1: 'A', 2: 'D', 3: 'G', 4: 'B', 5: 'e'}
     s = 0
@@ -154,6 +157,7 @@ def visualize_jams_onset(jam, save_path=None, low=None, high=None):
 
 
 def tablaturize_jams(jam, save_path=None):
+    plt.rcParams.update({'font.size': 6})
     str_midi_dict = {0: 40, 1: 45, 2: 50, 3: 55, 4: 59, 5: 64}
     string_dict = {0: 'E', 1: 'A', 2: 'D', 3: 'G', 4: 'B', 5: 'e'}
     style_dict = {0: 'r', 1: 'y', 2: 'b', 3: '#FF7F50', 4: 'g', 5: '#800080'}
@@ -200,6 +204,7 @@ def tablaturize_jams(jam, save_path=None):
 
 
 def visualize_chords(jam, save_path=None):
+    plt.rcParams.update({'font.size': 3})
     chord_ann = jam.search(namespace='chord')[1]
 
     for chord in chord_ann.data:
