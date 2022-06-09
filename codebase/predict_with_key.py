@@ -1,4 +1,7 @@
+"""
 
+Author : Adam ALIOUAT https://github.com/adam-at/
+"""
 
 import sklearn.ensemble._forest as f
 from sklearn.ensemble import RandomForestClassifier

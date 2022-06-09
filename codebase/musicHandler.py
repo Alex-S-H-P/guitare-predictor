@@ -1,3 +1,12 @@
+"""
+A script to create and teach the model that we will use.
+
+The model will be stored in models/RTF.pickle (RTF for Random Tree Forest)
+
+Author : Alexandre SCHŒPP https://github.com/Alex-S-H-P/
+"""
+
+
 import os
 import pickle
 import typing
@@ -6,6 +15,8 @@ from typing import TextIO
 import jams
 import librosa
 import numpy as np
+
+from codebase.utillib.embedder import Embedder
 
 try:
     import codebase.path_handler as path_handler
@@ -21,19 +32,34 @@ musics_path = path_handler.path_to_specific_dataset("musics")
 
 
 def build_model() -> RandomForestClassifier:
-    """Constructs a model"""
+    """
+    Constructs a new instance of the model
+    :return: model the new model
+    """
     model = RandomForestClassifier(n_jobs=-1)
     return model
 
 
 def getAnnotation(timeStamp: float, jamFile: jams.JAMS) -> str:
+    """
+    Gets the annotation at a given time.
+
+    :param timeStamp: float, the time, in seconds, at which we are looking
+    :param jamFile: JAMS, the file that stores the annotation
+    :return: value, the value of the note at the given timeStamp
+    """
     ic = jamFile.search(namespace="chord")
     for annotation in ic[1]["data"]:
         if annotation.time < timeStamp < annotation.time + annotation.duration:
             return annotation.value
 
 
-def custom_generator(x_or_y: str)->typing.Generator[list[float], None, None]:
+def custom_generator(x_or_y: str) -> typing.Generator[list[float], None, None]:
+    """
+    A custom generator that can de-pickle storage file and handle training the model without leaking memory
+    :param x_or_y: "x" if you want the input FFT decomposition. "y" if you want the output annotation.
+    :return: a generator that the model can be trained on
+    """
     assert x_or_y.lower() in ["x", "y"]
     returnX = x_or_y.lower() == "x"
 
@@ -48,9 +74,15 @@ def custom_generator(x_or_y: str)->typing.Generator[list[float], None, None]:
                 yield l
 
 
-def teach(model: RandomForestClassifier, how_many: str | int, metrics_per_beat: int = 48, n_features=128):
-    """teaches a model"""
-    assert isinstance(how_many, int) or how_many.strip(' -\t\n')
+def teach(model: RandomForestClassifier, metrics_per_beat: int = 48, n_features=128) -> Embedder:
+    """
+    Teaches a model
+
+    :param model: the model to be taught
+    :param metrics_per_beat: the number of times we compute the FFT per music beat
+    :param n_features: the number of frequencies computed by the FFT
+    :return: the embedder trained along the model
+    """
 
     embedder, note_count = classify.readyEmbedder(annotations_path)
     print("\033[36;1mStarting to parse database\033[0m to established twinned x and y data")
@@ -129,7 +161,7 @@ def teach(model: RandomForestClassifier, how_many: str | int, metrics_per_beat: 
 
 if __name__ == '__main__':
     m = build_model()
-    embedder = teach(m, "full data-set")
+    embedder = teach(m)
     models_path = path_handler.GNRL_PATH_TO_DATA_SET + "../models/"
     with open(models_path + "RTF.pickle", "wb") as file:
         pickle.dump(m, file)

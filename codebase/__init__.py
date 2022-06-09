@@ -1,3 +1,14 @@
+"""
+Imported
+--------
+Does not add a new function, class.
+Does import a few sub packages from codebase.
+
+Ran
+--------
+The default guitarset example
+
+"""
 import jams
 import os
 from codebase import path_handler

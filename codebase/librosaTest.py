@@ -1,3 +1,8 @@
+"""
+A junk test script.
+Kept only for having a known example of a reliable FFT determination script
+"""
+
 import librosa
 import numpy
 

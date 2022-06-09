@@ -1,4 +1,11 @@
 class Normalizer:
+    """
+    A normalizer.
+
+    Not necessary to the project. Kept for backward compatibility
+
+    Author : Alexandre SCHŒPP https://github.com/Alex-S-H-P/
+    """
 
     def __init__(self):
         self.min_data: float = +float("inf")

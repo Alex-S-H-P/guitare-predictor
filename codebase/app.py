@@ -1,3 +1,13 @@
+"""
+The main application of the project.
+Asks for a file to be read (.mp3 or .wav), generally, before reading said file,
+passing its content to the AI and the result of said AI to the folder.
+
+Should not be imported
+
+Author : Alexandre SCHŒPP https://github.com/Alex-S-H-P/
+"""
+
 import os
 import pickle
 import sys
@@ -10,7 +20,7 @@ import librosa.display
 import keyEstimator as k
 import predict_with_key as pkey
 
-path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # ensures the app can be run no matter the $CWD
 if not path in sys.path:
     sys.path.insert(1, path)
 del path
@@ -37,13 +47,24 @@ def load() -> tuple[embedder.Embedder, RandomForestClassifier]:
     return e, m
 
 
-manualCommands: dict[str, typing.Callable] = {}
-MESURES_PAR_BATTEMENT: float = 60
+command = typing.Callable[[str], str]
+
+manualCommands: dict[str, command] = {
+    "help": lambda s: "This app asks for a file that stores music to pass to its AI.\n"
+                      " Once that is done, it will ask for a path to store the resulting notes to"
+}
+MESURES_PAR_BATTEMENT: float = 60  # the amount of FFT done per music beat
 mod: RandomForestClassifier
 embed: embedder.Embedder
 
 
 def main(n_features: int = 128, noteChangeThreshold=.75):
+    """The main method of the application.
+
+    Can be run as a standalone if you are willing to overwrite the following global variables:
+        * mod should be the random tree forest model
+        * embed : should be the embedding used by the model
+        * manual commands as the commands that can be used without telling the app that you are using a file"""
     input_str: str = ""
     print("\r\033[37;1m", "-" * 42, "GUITARE-PREDICTOR", "-" * 42, "\033[0m", sep="\n")
     while True:
@@ -54,17 +75,17 @@ def main(n_features: int = 128, noteChangeThreshold=.75):
             print("\n" + "\033[36;1mBye !\033[0m")
             break
         finally:
-            if input_str in manualCommands:
-                manualCommands[input_str]()
+            if input_str.split()[0] in manualCommands:
+                manualCommands[input_str](input_str)
             elif os.path.isdir(input_str):
                 print("File \033[31;1mis a directory\033[0m")
                 choices = os.listdir(input_str)
                 choices = [f"\033[37;1m{choice}\033[0m/"
                            if os.path.isdir(
-                                input_str + (
-                                    "/" if input_str[-1] != "/" else ""
-                                ) + choice
-                           )
+                    input_str + (
+                        "/" if input_str[-1] != "/" else ""
+                    ) + choice
+                )
                            else f"\033[36;1m{choice}\033[0m" for choice in choices]
                 print("Choose among :", *choices, sep="\n\t - ")
             elif os.path.exists(input_str):
@@ -83,26 +104,26 @@ def main(n_features: int = 128, noteChangeThreshold=.75):
                 specs = np.abs(librosa.core.stft(sound_y, n_fft=n_features, hop_length=hop_len))
                 times = librosa.core.frames_to_time(specs[0], sr=sr, n_fft=n_features, hop_length=hop_len)
 
-                all_predictions=[[embed.flip(i) + "\n"
-                          for i in tree.predict([
-                                            list(
-                                                specs[:, time_idx]
-                                                ) for time_idx, _ in enumerate(times)
-                           ])
-                          ] for tree in mod.estimators_]
+                all_predictions = [[embed.flip(i) + "\n"
+                                    for i in tree.predict([
+                        list(
+                            specs[:, time_idx]
+                        ) for time_idx, _ in enumerate(times)
+                    ])
+                                    ] for tree in mod.estimators_]
 
                 result = [embed.flip(i) + "\n"
                           for i in pkey.predict_with_key(mod, all_predictions, [
-                                            list(
-                                                specs[:, time_idx]
-                                                ) for time_idx, _ in enumerate(times)
-                           ], key_correlations)
+                        list(
+                            specs[:, time_idx]
+                        ) for time_idx, _ in enumerate(times)
+                    ], key_correlations)
                           ]
                 beat_per_minute = librosa.beat.tempo(y=sound_y, sr=sr)[0]
                 result = folder.foldArrayOfNotes(result, beats_per_minute=beat_per_minute,
                                                  metric_per_beats=MESURES_PAR_BATTEMENT,
                                                  noteChangeThreshold=noteChangeThreshold,
-                                                 sliding_size=int(beat_per_minute * MESURES_PAR_BATTEMENT / 600 +.5))
+                                                 sliding_size=int(beat_per_minute * MESURES_PAR_BATTEMENT / 600 + .5))
                 print("Annotations \033[32;1mcréées\033[0m")
                 print("Où stocker le résultat ?")
                 r = input(">>> ")
@@ -118,7 +139,7 @@ def main(n_features: int = 128, noteChangeThreshold=.75):
                         for f in os.listdir(input_str[:i]):
                             print("\t> " +
                                   ("\033[36;1m"
-                                   if input_str[i+1:] in f else "\033[37;1m") +
+                                   if input_str[i + 1:] in f else "\033[37;1m") +
                                   f"{f}\033[0m" +
                                   ("/" if os.path.isdir(input_str[:i] + f)
                                    else "")

@@ -1,3 +1,8 @@
+"""
+
+Author : Adam ALIOUAT https://github.com/adam-at/
+"""
+
 import jams
 import os
 import matplotlib.pyplot as plt

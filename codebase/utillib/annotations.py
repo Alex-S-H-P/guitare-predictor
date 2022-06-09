@@ -1,7 +1,16 @@
+"""
+A tiny utility lib to handle functions raising Exceptions
+"""
+
 import typing
 
 
 def on_fail_ask_user_politely(f: typing.Callable):
+    """
+    A UEXP wrapper that makes it so an app won't collapse by a single failed function call
+    :param f: the function that can't panic
+    :return: the wrapped f
+    """
     def wrapper(*args, **kwargs):
         try:
             return f(*args, **kwargs)

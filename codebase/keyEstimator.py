@@ -1,7 +1,14 @@
+"""
+handles key estimation for error correction
+
+Author : Adam ALIOUAT https://github.com/adam-at/
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa
 import librosa.display
+
 
 class keyEstimator(object):
     def __init__(self, waveform, sr, tstart=None, tend=None):

@@ -1,3 +1,11 @@
+"""
+General functions useful for classifying notes.
+
+When ran as a standalone, does the elbow method to display the usefulness of each class.
+
+Author : Alexandre SCHŒPP https://github.com/Alex-S-H-P/
+"""
+
 import json
 import os
 import typing

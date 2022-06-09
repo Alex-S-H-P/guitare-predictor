@@ -1,9 +1,20 @@
+"""
+A note folder that to a series of tokens will return a series of "folds",
+    which detect the number of repetition that a token had (while smoothing out extreme values)
+
+
+Author : Alexandre SCHŒPP https://github.com/Alex-S-H-P/
+"""
+
 from typing import Generic, TypeVar, Iterable, Any, Sized
 
 T = TypeVar('T')  # do not use T anywhere else
 
 
 class Queue(Generic[T]):
+    """
+    A generic queue since i did not like the one in the standard library
+    """
 
     def __init__(self, space: int):
         assert space > 0, f"can't define queue that small {space}"
